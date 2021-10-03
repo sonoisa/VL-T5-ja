@@ -104,7 +104,7 @@ class SingleImageViz:
             )
         )
 
-    def draw_boxes(self, boxes, obj_ids=None, obj_scores=None, attr_ids=None, attr_scores=None):
+    def draw_boxes(self, boxes, obj_ids=None, obj_scores=None, attr_ids=None, attr_scores=None, box_ids=None):
         if len(boxes.shape) > 2:
             boxes = boxes[0]
         if len(obj_ids.shape) > 1:
@@ -121,21 +121,22 @@ class SingleImageViz:
             boxes = np.array(boxes)
         assert isinstance(boxes, np.ndarray)
         areas = np.prod(boxes[:, 2:] - boxes[:, :2], axis=1)
-        sorted_idxs = np.argsort(-areas).tolist()
-        boxes = boxes[sorted_idxs] if boxes is not None else None
-        obj_ids = obj_ids[sorted_idxs] if obj_ids is not None else None
-        obj_scores = obj_scores[sorted_idxs] if obj_scores is not None else None
-        attr_ids = attr_ids[sorted_idxs] if attr_ids is not None else None
-        attr_scores = attr_scores[sorted_idxs] if attr_scores is not None else None
+        # sorted_idxs = np.argsort(-areas).tolist()
+        # boxes = boxes[sorted_idxs] if boxes is not None else None
+        # obj_ids = obj_ids[sorted_idxs] if obj_ids is not None else None
+        # obj_scores = obj_scores[sorted_idxs] if obj_scores is not None else None
+        # attr_ids = attr_ids[sorted_idxs] if attr_ids is not None else None
+        # attr_scores = attr_scores[sorted_idxs] if attr_scores is not None else None
 
         assigned_colors = [self._random_color(maximum=1) for _ in range(len(boxes))]
-        assigned_colors = [assigned_colors[idx] for idx in sorted_idxs]
+        # assigned_colors = [assigned_colors[idx] for idx in sorted_idxs]
         if obj_ids is not None:
             labels = self._create_text_labels_attr(obj_ids, obj_scores, attr_ids, attr_scores)
             for i in range(len(boxes)):
-                color = assigned_colors[i]
-                self.add_box(boxes[i], color)
-                self.draw_labels(labels[i], boxes[i], color)
+                if box_ids is None or i in box_ids:
+                    color = assigned_colors[i]
+                    self.add_box(boxes[i], color)
+                    self.draw_labels(labels[i], boxes[i], color)
 
     def draw_labels(self, label, box, color):
         x0, y0, x1, y1 = box
@@ -206,8 +207,8 @@ class SingleImageViz:
         labels = [self.id2obj[i] for i in classes]
         attr_labels = [self.id2attr[i] for i in attr_classes]
         labels = [
-            f"{label} {score:.2f} {attr} {attr_score:.2f}"
-            for label, score, attr, attr_score in zip(labels, scores, attr_labels, attr_scores)
+            f"{i}: {attr} {attr_score:.2f} {label} {score:.2f}"
+            for i, (label, score, attr, attr_score) in enumerate(zip(labels, scores, attr_labels, attr_scores))
         ]
         return labels
 

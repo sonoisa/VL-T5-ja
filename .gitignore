@@ -162,3 +162,4 @@ tags
 
 # .lock
 *.lock
+.DS_Store
