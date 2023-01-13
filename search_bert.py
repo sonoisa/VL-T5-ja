@@ -1,4 +1,4 @@
-import scipy
+import scipy.spatial
 from sentence_bert import SentenceBertJapanese
 
 model = SentenceBertJapanese("sonoisa/sentence-bert-base-ja-mean-tokens")
