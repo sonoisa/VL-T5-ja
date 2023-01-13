@@ -144,7 +144,6 @@ runs
 /examples/rag/sweep
 
 # data
-/data
 serialization_dir
 
 # emacs
@@ -172,7 +171,8 @@ tags
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
