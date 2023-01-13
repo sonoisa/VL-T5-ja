@@ -145,6 +145,7 @@ runs
 
 # data
 serialization_dir
+/data/chive-1.2-mc30_gensim
 
 # emacs
 *.*~
@@ -374,3 +375,4 @@ cython_debug/
 #.idea/
 
 
+images/*

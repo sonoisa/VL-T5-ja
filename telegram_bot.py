@@ -37,5 +37,7 @@ class TelegramBot:
         dp = updater.dispatcher
         dp.add_handler(CommandHandler("start", self.start))
         dp.add_handler(MessageHandler(Filters.text, self.message))
+        # Star the bot
         updater.start_polling()
+        # Run until press Ctrl-C
         updater.idle()

@@ -35,8 +35,6 @@ def search(queries):
         print("\nTop 5 most similar sentences in corpus:")
 
         for idx, distance in results[0:closest_n]:
-            print(labels[idx], sentences[idx].strip(), "(Distance: %.4f)" % (distance))
-
-
-queries = ["雪", "車", "男性", "老人", "犬", "大阪"]
-search(queries)
+            print(
+                labels[idx], sentences[idx].strip(), "(Distance: %.4f)" % (1 / distance)
+            )
