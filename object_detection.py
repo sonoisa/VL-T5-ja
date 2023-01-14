@@ -22,9 +22,9 @@ class ObjectDetection:
         )
         self.frcnn.to(self.device)
 
-    def detection(self, image_filename):
+    def detection(self, image_path):
         image_preprocess = Preprocess(self.frcnn_cfg)
-        images, sizes, scales_yx = image_preprocess(image_filename)
+        images, sizes, scales_yx = image_preprocess(image_path)
         images = images.to(self.device)
 
         output_dict = self.frcnn(

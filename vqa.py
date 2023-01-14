@@ -50,7 +50,7 @@ class Vqa:
                 box_id = int(match.group(1))
                 box_ids.add(box_id)
 
-            # ToDo: 原形に直す&ストップワード削除
+            # TODO: 原形に直す&ストップワード削除
             answer_list.append(generated_sent)
 
         return answer_list
