@@ -14,6 +14,7 @@ Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
 
+import argparse
 import logging
 import os
 
@@ -52,11 +53,22 @@ PHOTO = 0
 TOKEN = os.environ.get("TOKEN")
 PERSONA_LIST = []
 
+parser = argparse.ArgumentParser()
+# TODO: max_persona_numに変える？サイズを制御するとあんまり関係ないものも出力されそう
+parser.add_argument(
+    "--persona_num",
+    default=5,
+    type=int,
+    help="Number of personas output. Default num is 5.",
+)
+args = parser.parse_args()
+PERSONA_NUM = args.persona_num
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Starts the conversation and asks the user about their gender."""
     await update.message.reply_text(
-        "こんにちは、ペルソナ対話ボットです。\n"
+        "こんにちは、ペルソナ対話ボットです。\n\n"
         "ボットのペルソナとして設定したい人物の画像を送信してください。\n"
         "/skip コマンドで画像の送信をスキップすることも可能です。",
         reply_markup=ReplyKeyboardRemove(),
@@ -71,10 +83,10 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     image_path = "./images/photo.jpg"
     await photo_file.download_to_drive(image_path)
     logger.info("Photo of %s: %s", user.first_name, image_path)
-    # TODO: 画像からペルソナを検索して、PERSONA_LISTに格納する
 
     persona_caption = PersonaCaption()
-    PERSONA_LIST = persona_caption.get_caption(image_path)
+    PERSONA_LIST = persona_caption.get_caption(image_path, PERSONA_NUM)
+    assert PERSONA_NUM == len(PERSONA_LIST)
 
     await update.message.reply_text(
         "ありがとうございます。この人物のペルソナは以下になります。\n\n"

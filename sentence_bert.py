@@ -16,9 +16,7 @@ class SentenceBertJapanese:
         self.model.to(device)
 
     def _mean_pooling(self, model_output, attention_mask):
-        token_embeddings = model_output[
-            0
-        ]  # First element of model_output contains all token embeddings
+        token_embeddings = model_output[0]
         input_mask_expanded = (
             attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
         )
@@ -43,5 +41,4 @@ class SentenceBertJapanese:
 
             all_embeddings.extend(sentence_embeddings)
 
-        # return torch.stack(all_embeddings).numpy()
         return torch.stack(all_embeddings)

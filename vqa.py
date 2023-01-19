@@ -1,9 +1,12 @@
 # 学習済みモデルとトークナイザーを読み込む
 
+import logging
 from VLT5.vlt5_model import VLT5Model
 from VLT5.vlt5_tokenizer import VLT5Tokenizer
 import re
 import torch
+
+logger = logging.getLogger(__name__)
 
 
 class Vqa:
@@ -53,4 +56,8 @@ class Vqa:
             # TODO: 原形に直す&ストップワード削除
             answer_list.append(generated_sent)
 
+        logger.info(
+            "Successfully answer questions from the photo. answer list = %s",
+            answer_list,
+        )
         return answer_list

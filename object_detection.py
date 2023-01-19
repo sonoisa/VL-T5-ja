@@ -1,8 +1,11 @@
+import logging
 import torch
 from VLT5.inference.processing_image import Preprocess
 from VLT5.inference.modeling_frcnn import GeneralizedRCNN
 from VLT5.inference.utils import Config
 import unicodedata
+
+logger = logging.getLogger(__name__)
 
 
 class ObjectDetection:
@@ -15,7 +18,6 @@ class ObjectDetection:
                 obj = unicodedata.normalize("NFKC", obj)
                 self.obj_ids.append(obj.split(",")[0].lower().strip())
 
-        # Faster-RCNN読み込み
         self.frcnn_cfg = Config.from_pretrained("unc-nlp/frcnn-vg-finetuned")
         self.frcnn = GeneralizedRCNN.from_pretrained(
             "unc-nlp/frcnn-vg-finetuned", config=self.frcnn_cfg
@@ -35,13 +37,15 @@ class ObjectDetection:
             max_detections=self.frcnn_cfg.max_detections,
             return_tensors="pt",
         )
+        logger.info("Successfully detect objects in the photo.")
         return output_dict
 
     def get_object_labels(self, output_dict):
         labels = []
-        # 物体ラベルを追加
         for id in output_dict.get("obj_ids")[0]:
             labels.append(self.obj_ids[id])
+        labels = list(set(labels))
+        logger.info("Successfully get object labels in the photo. labels = %s", labels)
         return labels
 
     def get_object_features_for_vlt5(self, output_dict):

@@ -1,4 +1,8 @@
 ## persona_caption_dialog
 
-画像からペルソナ記述文を出力し、それを元にペルソナ対話システムを構築する
 
+
+###
+
+1. Set Telegram bot token as environment args: `export TOKEN=<YOUR TELEGRAM BOT TOKEN>`
+2. Run bot server: `python bot.py`
