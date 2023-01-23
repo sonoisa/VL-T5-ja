@@ -19,6 +19,7 @@ import logging
 import os
 
 from telegram import __version__ as TG_VER
+from GPT2.conv_ai_model_ja import ConvAIModelJa
 
 from persona_captiopn import PersonaCaption
 
@@ -52,6 +53,7 @@ logger = logging.getLogger(__name__)
 PHOTO = 0
 TOKEN = os.environ.get("TOKEN")
 PERSONA_LIST = []
+DIALOG_HISTORY = []
 
 parser = argparse.ArgumentParser()
 # TODO: max_persona_numに変える？サイズを制御するとあんまり関係ないものも出力されそう
@@ -67,10 +69,15 @@ PERSONA_NUM = args.persona_num
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Starts the conversation and asks the user about their gender."""
+    # re-initialize
+    global PERSONA_LIST, DIALOG_HISTORY
+    PERSONA_LIST = []
+    DIALOG_HISTORY = []
+
     await update.message.reply_text(
-        "こんにちは、ペルソナ対話ボットです。\n\n"
+        "こんにちは、ペルソナ対話ボットです。\n私は送信された人物画像になりきってチャットを行います。\n\n"
         "ボットのペルソナとして設定したい人物の画像を送信してください。\n"
-        "/skip コマンドで画像の送信をスキップすることも可能です。",
+        "/skip コマンドで画像の送信をスキップし、デフォルトのボットとしてチャットすることも可能です。",
         reply_markup=ReplyKeyboardRemove(),
     )
     return PHOTO
@@ -85,6 +92,7 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     logger.info("Photo of %s: %s", user.first_name, image_path)
 
     persona_caption = PersonaCaption()
+    global PERSONA_LIST
     PERSONA_LIST = persona_caption.get_caption(image_path, PERSONA_NUM)
     assert PERSONA_NUM == len(PERSONA_LIST)
 
@@ -94,7 +102,7 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         + "\n".join(PERSONA_LIST)
         + "\n----------\n\n"
         "以上をボットのペルソナとして設定します。\n\n"
-        "会話を始めましょう！"
+        "チャットを始めましょう!"
     )
 
     return ConversationHandler.END
@@ -104,17 +112,8 @@ async def skip_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Skips the photo."""
     user = update.message.from_user
     logger.info("User %s did not send a photo.", user.first_name)
-    await update.message.reply_text("画像の送信をスキップしました。\n" "デフォルトの対話ボットとして設定します。")
-
-    return ConversationHandler.END
-
-
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Cancels and ends the conversation."""
-    user = update.message.from_user
-    logger.info("User %s canceled the conversation.", user.first_name)
     await update.message.reply_text(
-        "Bye! I hope we can talk again some day.", reply_markup=ReplyKeyboardRemove()
+        "画像の送信をスキップしました。\n" "デフォルトのボットとして設定します。\n\nチャットを始めましょう!"
     )
 
     return ConversationHandler.END
@@ -122,8 +121,34 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 # TODO: 対話モデルを使って会話するように変更
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Echo the user message."""
-    await update.message.reply_text(update.message.text)
+    """Chat using gpt2 model."""
+    user = update.message.from_user
+    user_message = update.message.text
+
+    model = ConvAIModelJa("./GPT2/model/")
+    global DIALOG_HISTORY, PERSONA_LIST
+    reply, DIALOG_HISTORY = model.interact_single(
+        user_message, history=DIALOG_HISTORY, personality=PERSONA_LIST
+    )
+
+    logger.info("User %s send 「%s」 to bot", user.first_name, user_message)
+    logger.info("Dialog history is %s.", DIALOG_HISTORY)
+    await update.message.reply_text(reply)
+
+
+async def goodbye(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.message.from_user
+    logger.info("User %s ended the conversation.", user.first_name)
+    await update.message.reply_text(
+        "会話を終了します。\nまたチャットを始めたい場合は/startコマンドを入力してください。\n\n" "さようなら！",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+    # TODO: ボットとの会話を終了できるようにする、ペルソナと対話履歴を初期化する
+    # re-initialize
+    global PERSONA_LIST
+    PERSONA_LIST = []
+    DIALOG_HISTORY = []
+    return ConversationHandler.END
 
 
 def main() -> None:
@@ -140,11 +165,12 @@ def main() -> None:
                 CommandHandler("skip", skip_photo),
             ],
         },
-        fallbacks=[CommandHandler("cancel", cancel)],
+        fallbacks=[CommandHandler("goodbye", goodbye)],
     )
 
     application.add_handler(conv_handler)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
+    application.add_handler(CommandHandler("goodbye", goodbye))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
